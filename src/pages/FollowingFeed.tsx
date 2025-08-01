@@ -5,18 +5,21 @@ import { Post } from "../types/Post";
 import { useAuth } from "../context/AuthContext";
 import CommentModal from "../components/CommentModal";
 import { Link } from "react-router-dom";
+import FullScreenLoader from "../components/FullScreenLoader";
 
 const FollowingFeed = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [activePost, setActivePost] = useState<Post | null>(null);
   const API_BASE = import.meta.env.VITE_API_BASE;
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchFollowedPosts = async () => {
       if (!user) return;
 
       try {
+        setLoading(true);
         const res = await fetch(
           `${API_BASE}/api/posts/following/${user.email}`
         );
@@ -26,42 +29,41 @@ const FollowingFeed = () => {
         setPosts(posts);
       } catch (err) {
         console.error("Error loading followed posts:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchFollowedPosts();
   }, [user]);
 
-  const handleLike = (postId: string) => {
+  const handleLike = async (postId: string) => {
     if (!user) return;
 
-    const updatedPosts = posts.map((post) => {
-      if (post._id === postId) {
-        const alreadyLiked = post.likes?.includes(user.email);
-        const newLikes = alreadyLiked
-          ? post.likes?.filter((email) => email !== user.email)
-          : [...(post.likes || []), user.email];
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/posts/${postId}/like`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userEmail: user.email }),
+      });
 
-        return { ...post, likes: newLikes };
-      }
-      return post;
-    });
+      if (!res.ok) throw new Error("Failed to like post");
 
-    const allPosts: Post[] = JSON.parse(
-      localStorage.getItem("devconnect_posts") || "[]"
-    );
+      const data = await res.json();
+      const updatedPost = data.post;
 
-    const updatedAll = allPosts.map((post) =>
-      post._id === postId
-        ? {
-            ...post,
-            likes: updatedPosts.find((p) => p._id === postId)?.likes || [],
-          }
-        : post
-    );
-
-    localStorage.setItem("devconnect_posts", JSON.stringify(updatedAll));
-    setPosts(updatedPosts);
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => (p._id === postId ? updatedPost : p))
+      );
+    } catch (err) {
+      console.error("Like failed:", err);
+      alert("Failed to like post.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCommentUpdate = (updatedPost: Post) => {
@@ -73,6 +75,7 @@ const FollowingFeed = () => {
 
   return (
     <div className="min-h-screen px-4 py-8 max-w-3xl mx-auto">
+      {loading && <FullScreenLoader />}
       <h1 className="text-3xl font-bold mb-8">👥 Following</h1>
 
       {posts.length === 0 ? (

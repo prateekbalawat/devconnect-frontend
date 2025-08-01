@@ -24,7 +24,7 @@ const Feed = () => {
         const postData = await res.json();
         if (!res.ok) throw new Error("Failed to fetch posts");
 
-        setPosts(postData.reverse());
+        setPosts(postData);
 
         // Fetch following status if user is logged in
         if (user) {
@@ -52,6 +52,7 @@ const Feed = () => {
     if (!user) return;
 
     try {
+      setLoading(true);
       const res = await fetch(`${API_BASE}/api/posts/${postId}/like`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -69,6 +70,8 @@ const Feed = () => {
     } catch (err) {
       console.error("Like failed:", err);
       setError("Could not like post. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,7 +79,7 @@ const Feed = () => {
     if (!user || targetEmail === user.email) return;
 
     const isFollowing = followingMap[targetEmail];
-
+    setLoading(true);
     try {
       const url = `${API_BASE}/api/users/${targetEmail}/${
         isFollowing ? "unfollow" : "follow"
@@ -96,6 +99,8 @@ const Feed = () => {
     } catch (err) {
       console.error("Follow/unfollow failed:", err);
       setError("Failed to update follow status");
+    } finally {
+      setLoading(false);
     }
   };
 

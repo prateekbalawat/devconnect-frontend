@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Comment, Post } from "../types/Post";
 import { useAuth } from "../context/AuthContext";
 import { v4 as uuidv4 } from "uuid";
+import FullScreenLoader from "../components/FullScreenLoader";
 
 interface Props {
   post: Post;
@@ -17,114 +18,160 @@ const CommentModal = ({ post, onClose, onCommentAdd }: Props) => {
   const [editedContent, setEditedContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyInput, setReplyInput] = useState("");
-  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editingReplyId, setEditingReplyId] = useState<{
+    commentIndex: number;
+    replyIndex: number;
+  } | null>(null);
   const [editedReplyContent, setEditedReplyContent] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleAddComment = async () => {
     if (!user || !input.trim()) return;
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/api/posts/${localPost._id}/comment`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userEmail: user.email, content: input }),
-      }
-    );
-    const data = await res.json();
-    setLocalPost(data.post);
-    onCommentAdd(data.post);
-    setInput("");
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/api/posts/${localPost._id}/comment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userEmail: user.email, content: input }),
+        }
+      );
+      const data = await res.json();
+      setLocalPost(data.post);
+      onCommentAdd(data.post);
+      setInput("");
+    } catch (err: any) {
+      console.log(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveComment = async (index: number) => {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/api/posts/${
-        localPost._id
-      }/comment/${index}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editedContent }),
-      }
-    );
-    const data = await res.json();
-    setLocalPost(data.post);
-    onCommentAdd(data.post);
-    setEditingCommentId(null);
-    setEditedContent("");
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/api/posts/${
+          localPost._id
+        }/comment/${index}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: editedContent }),
+        }
+      );
+      const data = await res.json();
+      setLocalPost(data.post);
+      onCommentAdd(data.post);
+      setEditingCommentId(null);
+      setEditedContent("");
+    } catch (err: any) {
+      console.log(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteComment = async (index: number) => {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/api/posts/${
-        localPost._id
-      }/comment/${index}`,
-      {
-        method: "DELETE",
-      }
-    );
-    const data = await res.json();
-    setLocalPost(data.post);
-    onCommentAdd(data.post);
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/api/posts/${
+          localPost._id
+        }/comment/${index}`,
+        {
+          method: "DELETE",
+        }
+      );
+      const data = await res.json();
+      setLocalPost(data.post);
+      onCommentAdd(data.post);
+    } catch (err: any) {
+      console.log(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddReply = async (commentIndex: number) => {
     if (!user || !replyInput.trim()) return;
-
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/api/posts/${
-        localPost._id
-      }/comment/${commentIndex}/reply`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userEmail: user.email, content: replyInput }),
-      }
-    );
-    const data = await res.json();
-    setLocalPost(data.post);
-    onCommentAdd(data.post);
-    setReplyInput("");
-    setReplyingTo(null);
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/api/posts/${
+          localPost._id
+        }/comment/${commentIndex}/reply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userEmail: user.email, content: replyInput }),
+        }
+      );
+      const data = await res.json();
+      setLocalPost(data.post);
+      onCommentAdd(data.post);
+      setReplyInput("");
+      setReplyingTo(null);
+    } catch (err: any) {
+      console.log(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveReply = async (commentIndex: number, replyIndex: number) => {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/api/posts/${
-        localPost._id
-      }/comment/${commentIndex}/reply/${replyIndex}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editedReplyContent }),
-      }
-    );
-    const data = await res.json();
-    setLocalPost(data.post);
-    onCommentAdd(data.post);
-    setEditingReplyId(null);
-    setEditedReplyContent("");
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/api/posts/${
+          localPost._id
+        }/comment/${commentIndex}/reply/${replyIndex}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: editedReplyContent }),
+        }
+      );
+      const data = await res.json();
+      setLocalPost(data.post);
+      onCommentAdd(data.post);
+      setEditingReplyId(null);
+      setEditedReplyContent("");
+    } catch (err: any) {
+      console.log(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteReply = async (
     commentIndex: number,
     replyIndex: number
   ) => {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE}/api/posts/${
-        localPost._id
-      }/comment/${commentIndex}/reply/${replyIndex}`,
-      {
-        method: "DELETE",
-      }
-    );
-    const data = await res.json();
-    setLocalPost(data.post);
-    onCommentAdd(data.post);
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE}/api/posts/${
+          localPost._id
+        }/comment/${commentIndex}/reply/${replyIndex}`,
+        {
+          method: "DELETE",
+        }
+      );
+      const data = await res.json();
+      setLocalPost(data.post);
+      onCommentAdd(data.post);
+    } catch (err: any) {
+      console.log(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      {loading && <FullScreenLoader />}
       <div className="bg-white rounded-xl w-full max-w-xl p-6 relative max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
@@ -268,7 +315,9 @@ const CommentModal = ({ post, onClose, onCommentAdd }: Props) => {
                               className="bg-white border border-gray-300 p-2 rounded-md"
                             >
                               <div className="flex flex-col">
-                                {editingReplyId === reply.id ? (
+                                {editingReplyId?.commentIndex ===
+                                  commentIndex &&
+                                editingReplyId?.replyIndex === replyIndex ? (
                                   <>
                                     <input
                                       value={editedReplyContent}
@@ -310,7 +359,10 @@ const CommentModal = ({ post, onClose, onCommentAdd }: Props) => {
                                       <div className="text-xs mt-1 space-x-2">
                                         <button
                                           onClick={() => {
-                                            setEditingReplyId(reply.id);
+                                            setEditingReplyId({
+                                              commentIndex,
+                                              replyIndex,
+                                            });
                                             setEditedReplyContent(
                                               reply.content
                                             );

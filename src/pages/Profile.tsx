@@ -53,6 +53,7 @@ const Profile = () => {
     if (!email || !user) return;
 
     const fetchFollowData = async () => {
+      setLoading(true);
       try {
         const [followersRes, followingRes] = await Promise.all([
           fetch(`${API_BASE}/api/users/${email}/followers`),
@@ -69,6 +70,8 @@ const Profile = () => {
         setIsFollowingUser(followers.followers.includes(user.email));
       } catch (err) {
         console.error("Error fetching follow data:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -82,6 +85,7 @@ const Profile = () => {
     const url = `${API_BASE}/api/users/${email}/${action}`;
 
     try {
+      setLoading(true);
       await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -96,6 +100,8 @@ const Profile = () => {
       setIsFollowingUser(updatedFollowers.followers.includes(user.email));
     } catch (err) {
       console.error("Error toggling follow:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,9 +158,10 @@ const Profile = () => {
       );
       setEditingPost(null);
     } catch (err) {
-      setLoading(false);
       console.error("Edit error:", err);
       alert("Failed to update post.");
+    } finally {
+      setLoading(false);
     }
   };
 
