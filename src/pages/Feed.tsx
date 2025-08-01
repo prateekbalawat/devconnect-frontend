@@ -10,7 +10,6 @@ const Feed = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [activePost, setActivePost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -18,7 +17,6 @@ const Feed = () => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        setError("");
 
         const res = await fetch(`${API_BASE}/api/posts`);
         const postData = await res.json();
@@ -39,7 +37,7 @@ const Feed = () => {
           setFollowingMap(map);
         }
       } catch (err: any) {
-        setError(err.message || "Something went wrong");
+        console.log(err.message || "Something went wrong");
       } finally {
         setLoading(false);
       }
@@ -69,7 +67,6 @@ const Feed = () => {
       );
     } catch (err) {
       console.error("Like failed:", err);
-      setError("Could not like post. Try again.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +95,6 @@ const Feed = () => {
       }));
     } catch (err) {
       console.error("Follow/unfollow failed:", err);
-      setError("Failed to update follow status");
     } finally {
       setLoading(false);
     }
@@ -114,7 +110,6 @@ const Feed = () => {
   return (
     <div className="min-h-screen px-4 py-8 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">🌍 Global Feed</h1>
-      {error && <div className="text-center text-red-500">{error}</div>}
       {loading && <FullScreenLoader />}
 
       {posts.length === 0 ? (
